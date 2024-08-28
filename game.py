@@ -123,6 +123,7 @@ class Game:
         self.fps = 60
         self.text_font = pygame.font.Font(None, 30)
         self.timer = pygame.time.Clock()
+        self.current_problem = 0
         self.terms = []
         self.definitions = []
         self.indices = []
@@ -158,7 +159,7 @@ class Game:
                 self.reviewed_all = True
                 self.added = True
 
-        return self.current[0] # return the current problem
+        self.current_problem = self.current[0] # return the current problem
         # else:
 
         #     temp = self.i
@@ -186,7 +187,7 @@ class Game:
 
         for i in range(len(terms)): # initialize terms and defs arrays in game class
             self.terms.append(Obstacle(terms[i]))
-            self.definitions.append(Obstacle(definitions[i]))
+            self.definitions.append(Obstacle(definitions[i], x=50, y=50))
             self.indices.append(i)
 
         random.shuffle(self.indices) # shuffle the cards
@@ -194,7 +195,7 @@ class Game:
 
     def detect_collision(self):
 
-        if self.player.x >= self.terms[0].x:
+        if self.player.x >= self.terms[0].x and self.player.x <= self.terms[0].x + self.width / 5:
             if self.player.running_position == 1:
                 return 1
             elif self.player.running_position == 2:
@@ -209,7 +210,7 @@ class Game:
 
 
 
-    def randomize_choices(self, element):
+    def randomize_choices(self):
 
         temp = self.indices[-1]
         # Swap the excluded element with the last element
@@ -222,7 +223,7 @@ class Game:
         temp = self.indices[-1]
         self.indices[-1], self.indices[self.i] = self.indices[self.i], temp
 
-        result.append(element)
+        result.append(self.current_problem)
 
         random.shuffle(result)
 
@@ -235,14 +236,14 @@ class Game:
 
         self.current.pop(0)
 
-        # return where the correct answer isg
-        if self.a == element:
+        # return where the correct answer is
+        if self.a == self.current_problem:
             return 1
-        if self.b == element:
+        if self.b == self.current_problem:
             return 2
-        if self.c == element:
+        if self.c == self.current_problem:
             return 3
-        if self.d == element:
+        if self.d == self.current_problem:
             return 4
 
 
@@ -250,8 +251,8 @@ class Game:
 
 
         if self.wave:
-
-            self.correct = self.randomize_choices(self.learn())
+            self.learn()
+            self.correct = self.randomize_choices()
             if self.added:
                 for i in self.indices:
                     self.current.append(i)
@@ -271,22 +272,36 @@ class Game:
             self.wave = False
 
 
-        self.terms[self.a].move(10)
+        self.terms[self.a].move(3)
         self.terms[self.a].draw(self.screen, self.width / 5, (self.height - 100) / 4)
-        self.terms[self.b].move(10)
+        self.terms[self.b].move(3)
         self.terms[self.b].draw(self.screen, self.width / 5, (self.height - 100) / 4)
-        self.terms[self.c].move(10)
+        self.terms[self.c].move(3)
         self.terms[self.c].draw(self.screen, self.width / 5, (self.height - 100) / 4)
-        self.terms[self.d].move(10)
+        self.terms[self.d].move(3)
         self.terms[self.d].draw(self.screen, self.width / 5, (self.height - 100) / 4)
 
         # check if correct or not
+
+        if self.detect_collision() != 0:
+            if self.detect_collision() != self.correct:
+                self.screen.fill((255, 0, 0))
+                img = self.text_font.render("Wrong!", True, (0, 0, 255))
+                self.screen.blit(img, (self.width / 2, self.height / 2))
+
+
 
 
         if self.terms[self.a].x < -250:
             self.wave = True
 
 
+    def display_text(self):
+
+        # self.definitions[self.current_problem].text
+
+        img = self.text_font.render(self.definitions[self.current_problem].text, True, (0, 0, 255))
+        self.screen.blit(img, (0, 0))
 
     def run(self):
 
@@ -301,7 +316,7 @@ class Game:
 
             self.draw_screen()
             
-
+            self.display_text()
             self.move_obstacles()
             self.player.draw(self.screen)
 
@@ -324,3 +339,5 @@ class Game:
 
 game = Game(1000, 600)
 game.run()
+
+# make it so that you cant move when you are in an answer choice
